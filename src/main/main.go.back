@@ -1,0 +1,309 @@
+package main
+
+import (
+	"fmt"
+	"html/template"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"time"
+
+	"bytes"
+
+	"encoding/xml"
+	"io/ioutil"
+)
+
+//// web related
+
+// StaticURL URL of the static content
+const StaticURL string = "" + string(filepath.Separator) + "web" + string(filepath.Separator) + "static" + string(filepath.Separator) //OSHIHORNET CHANGE
+
+// StaticRoot path of the static content
+const StaticRoot string = "web" + string(filepath.Separator) + "static" + string(filepath.Separator) //OSHIHORNET CHANGE
+
+// DataFilePath path of the data files on StaticRoot
+const DataFilePath string = "data" + string(filepath.Separator)
+
+// DataFileExtension extension of the data files
+const DataFileExtension string = ".csv"
+
+const TemplateRoot = "web" + string(filepath.Separator) + "templates" + string(filepath.Separator) //OSHIHORNET CHANGE PARAMETRIZATION
+
+const PracticeURL = "" + string(filepath.Separator) + "practice" + string(filepath.Separator)
+const CommonRoot = ".." + string(filepath.Separator) + ".."
+const PracticeRoot = CommonRoot + string(filepath.Separator) + "OSHIWASP_local" + string(filepath.Separator) //OSHIHORNET
+const PracticeInfoFilename = "oshiwasp_info.xml"          //OSHIHORNET
+
+//level of attention of the messages
+const (
+	HIDE    = 0
+	INFO    = 1
+	SUCCESS = 2
+	WARNING = 3
+	DANGER  = 4
+)
+
+//language
+const (
+	nLangs  = 2
+	ENGLISH = 0
+	SPANISH = 1
+)
+
+//title of pages respect of state
+var (
+	titleWelcome     [nLangs]string
+	titleThePlatform [nLangs]string
+	titleInit        [nLangs]string
+	titleConfig      [nLangs]string
+	titleTest        [nLangs]string
+	titleExperiment  [nLangs]string
+	titleRun         [nLangs]string
+	titleStop        [nLangs]string
+	titleCollect     [nLangs]string
+	titlePoweroff    [nLangs]string
+	titleAbout       [nLangs]string
+	titleHelp        [nLangs]string
+	titleTheEnd      [nLangs]string
+)
+
+type PracticeInfo struct {
+	Title          string
+	Id             string
+	Visibility     bool
+	Description    string
+	Main_File      string
+	AttachmentList []string `xml:"Attachment"`
+	LinkList       []string `xml:"Link"`
+	Path           string
+}
+type PracticeShort struct {
+	Title string
+	Id    string
+}
+
+//Context data about the configuration of the system and the web page
+type Context struct {
+	//web page related
+	Title  string
+	Static string
+	//web appearance : message and alert level
+	Message    string
+	AlertLevel int // HIDE, INFO, SUCCESS, WARNING, DANGER
+
+	//language
+	Lang int
+
+	// practice list OSHIHORNET
+	PracticeList []PracticeShort
+	Practice     []PracticeInfo
+
+}
+
+var (
+	theContext Context
+	practiceList []PracticeInfo
+)
+
+func (cntxt *Context) setPractices() { //OSHIHORNET
+
+	//get current practice tree
+
+
+	d, err := os.Open(PracticeRoot)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer d.Close()
+	files := []string{}
+	err = filepath.Walk(PracticeRoot, func(path string, f os.FileInfo, err error) error {
+		files = append(files, path)
+		return nil
+	})
+
+
+	for _, file := range files {
+		if filepath.Base(file) == PracticeInfoFilename {
+			xmlFile, err := os.Open(file)
+			if err != nil {
+				fmt.Println("Error opening file:", err)
+				return
+			}
+			defer xmlFile.Close()
+			xmlReaded, _ := ioutil.ReadAll(xmlFile)
+			var practInfo PracticeInfo
+			xml.Unmarshal(xmlReaded, &practInfo)
+			if practInfo.Visibility {
+				practInfo.Path = filepath.Dir(file)
+				practiceList = append(practiceList, practInfo)
+				var practShort PracticeShort
+				practShort.Title = practInfo.Title
+				practShort.Id = practInfo.Id
+				cntxt.PracticeList = append(cntxt.PracticeList, practShort)
+			}
+		}
+	}
+
+
+}
+
+func (cntxt *Context) initiate() {
+
+	cntxt.setPractices() //OSHIHORNET
+
+	//set language
+	cntxt.Lang = SPANISH
+
+	//set the titles of the pages
+
+	titleWelcome[ENGLISH] = "Welcome!"
+	titleWelcome[SPANISH] = "Bienvenidos!"
+	titleThePlatform[ENGLISH] = "The Platform"
+	titleThePlatform[SPANISH] = "La Plataforma"
+	titleInit[ENGLISH] = "Initialization"
+	titleInit[SPANISH] = "Inicialización"
+	titleConfig[ENGLISH] = "Configuration of Sensor Platform"
+	titleConfig[SPANISH] = "Configuración de la Plataforma de Sensores"
+	titleTest[ENGLISH] = "Test the Sensor Platform"
+	titleTest[SPANISH] = "Prueba la Plataforma de Sensores"
+	titleExperiment[ENGLISH] = "Experiment"
+	titleExperiment[SPANISH] = "Experimento"
+	titleRun[ENGLISH] = "Run"
+	titleRun[SPANISH] = "Ejecución"
+	titleStop[ENGLISH] = "Stop"
+	titleStop[SPANISH] = "Parada"
+	titleCollect[ENGLISH] = "Collect Data"
+	titleCollect[SPANISH] = "Recopilar los Datos"
+	titlePoweroff[ENGLISH] = "Power off"
+	titlePoweroff[SPANISH] = "Apagar"
+	titleAbout[ENGLISH] = "About"
+	titleAbout[SPANISH] = "Sobre mi"
+	titleHelp[ENGLISH] = "Help"
+	titleHelp[SPANISH] = "Ayuda"
+	titleTheEnd[ENGLISH] = "The End"
+	titleTheEnd[SPANISH] = "Fin"
+
+}
+
+//////////////
+// Web section
+//////////////
+
+//RemoveContents erase the contents of a directory
+//intended to remove data files en data directory
+func RemoveContents(dir string) error {
+	d, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		err = os.RemoveAll(filepath.Join(dir, name))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//Home of the website
+func Home(w http.ResponseWriter, req *http.Request) {
+	log.Println(">>>", req.URL)
+	log.Println(">>>", theContext)
+
+	theContext.Title = titleWelcome[theContext.Lang]
+	render(w, "index", theContext)
+}
+
+func shutdown() {
+	cmd := exec.Command("shutdown", "-h", "now")
+	//cmd := exec.Command("shutdown", "-k", "now")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+	} else { //command was successful
+		log.Println("Bye!")
+	}
+}
+
+//About shows the page with info
+func About(w http.ResponseWriter, req *http.Request) {
+	log.Println(">>>", req.URL)
+	log.Println(">>>", theContext)
+
+	theContext.Title = titleAbout[theContext.Lang]
+	render(w, "about", theContext)
+}
+
+//Help shows information about the tool
+func Help(w http.ResponseWriter, req *http.Request) {
+	log.Println(">>>", req.URL)
+	log.Println(">>>", theContext)
+
+	theContext.Title = titleHelp[theContext.Lang]
+	render(w, "help", theContext)
+}
+
+// render
+func render(w http.ResponseWriter, tmpl string, cntxt Context) {
+	log.Println("[render]>>>", cntxt)
+	cntxt.Static = StaticURL
+	//list of templates, put here all the templates needed
+	tmplList := []string{fmt.Sprintf("%sbase.html", TemplateRoot),
+		fmt.Sprintf("%smessage.html", TemplateRoot),
+		fmt.Sprintf("%s%s.html", TemplateRoot, tmpl)}
+	t, err := template.ParseFiles(tmplList...)
+	if err != nil {
+		log.Print("template parsing error: ", err)
+	}
+	err = t.Execute(w, cntxt)
+	if err != nil {
+		log.Print("template executing error: ", err)
+	}
+}
+
+//StaticHandler allows to server the statics references
+func StaticHandler(w http.ResponseWriter, req *http.Request) {
+	staticFile := req.URL.Path[len(StaticURL):]
+	if len(staticFile) != 0 {
+		f, err := http.Dir(StaticRoot).Open(staticFile)
+		if err == nil {
+			content := io.ReadSeeker(f)
+			http.ServeContent(w, req, staticFile, time.Now(), content)
+			return
+		}
+	}
+	http.NotFound(w, req)
+}
+
+
+func main() {
+	//set the initial state
+	theContext.initiate()
+	//	theOshi.initiate() OSHIHORNET DEVELOPING
+
+	http.HandleFunc("/", Home)
+	//http.HandleFunc("/end/", End)
+	http.HandleFunc("/about/", About)
+	http.HandleFunc("/help/", Help)
+	http.HandleFunc(StaticURL, StaticHandler)
+
+	// change this to show the real ip address of eth0
+	//log.Println("Listening on 192.168.1.1:8000")
+
+	err := http.ListenAndServe(":8689", nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+}

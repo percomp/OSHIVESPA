@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+{{ if eq .Lang 0 }}
+<html lang="en">
+{{else if eq .Lang 1}}
+<html lang="es">
+{{end}}
+<head>
+   <meta charset="utf-8">
+   <title>OSHIWASP</title>
+   <link rel="stylesheet" href="{{ .Static }}css/bootstrap.min.css" type="text/css">
+   <link rel="shortcut icon" href="{{ .Static }}img/favicon.ico">
+   <script src="{{ .Static }}js/jquery.min.js"></script>
+   <script src="{{ .Static }}js/bootstrap.min.js"></script>
+</head>
+<body>
+   <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container-fluid">
+         <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#menu" aria-expanded="false">
+               <span class="sr-only">Toggle navigation</span>
+               <span class="icon-bar"></span>
+               <span class="icon-bar"></span>
+               <span class="icon-bar"></span>
+               <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">OSHIWASP</a>
+         </div>
+         <div class="collapse navbar-collapse" id="menu">
+            <ul class="nav navbar-nav">
+               
+               <li><a href="/">{{if eq .Lang 0}}Content Manager{{else if eq .Lang 1}}Gestor de Contenidos{{end}}</a></li>
+               <li><a href="/system">{{if eq .Lang 0}}System Manager{{else if eq .Lang 1}}Configuración del Sistema{{end}}</a></li>
+           </ul>
+           <!-- 
+            <ul class="nav navbar-nav navbat-right">
+               <li class="nav-item navbar-right"> 
+               {{if eq .Lang 0}}
+               <a href="/changeLang/">Español</a>
+               {{else if eq .Lang 1}}
+               <a href="/changeLang/">English</a>
+               {{end}}
+               </li> 
+           </ul>
+           -->
+           <ul class="nav navbar-nav navbar-right">
+               <li class="dropdown">
+                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{.User}}<span class="caret"></span></a>
+                   <ul class="dropdown-menu">
+                     <li><a href=/changePassword>{{if eq .Lang 0}}Change Password{{else if eq .Lang 1}}Cambiar Contraseña{{end}}</a></li>
+                     <li><a href=/logout>{{if eq .Lang 0}}Exit{{else if eq .Lang 1}}Salir{{end}}</a></li>
+                  </ul>
+               </li> 
+           </ul>
+         </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+   </nav>
+   <div style="width: 100%;height: 56px;" ></div>
+   {{ template "content" . }}
+</body>
+</html>

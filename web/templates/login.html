@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html style="height: 100%;"lang="es">
+<head>
+<meta charset="utf-8">
+<title>OSHIWASP</title>
+<link rel="stylesheet" href="{{ .Static }}css/bootstrap.min.css"
+	type="text/css">
+<link rel="shortcut icon" href="{{ .Static }}img/favicon.ico">
+<script src="{{ .Static }}js/jquery.min.js"></script>
+<script src="{{ .Static }}js/bootstrap.min.js"></script>
+</head>
+<body style="min-height: 100%;">
+	<div class="jumbotron jumbo-props" style="margin-bottom: 0;min-height: 100%;">
+            <div class="container ctn-props" role="main">
+                <div class="row row-props">
+                    <div class="col-md-5 logo-props">
+                        <a href="/login">
+                            <img class="profile-img img-responsive" src="{{ .Static }}img/logo.png" alt="">
+                            <h1 class="text-center"><div class="oshiwasp-title">OSHIWASP</div></h1>
+                        </a>
+                    </div>
+                    <div class="col-md-7 login-props">
+                        <div class="account-wall">
+                            <h1 class="text-center"><div class="section-title">Login</div></h1>
+                            <form class="form-signin" action="/loginSubmit" method="post">
+                                <div class="form-item">    
+                                    <input type="text" name="name" class="form-control" placeholder="Nombre de usuario *" autofocus>
+                                </div>
+                                <div class="form-item">    
+                                    <input type="password" name="password" class="form-control" placeholder="Contraseña *">
+                                </div>
+                                <div class="form-item">
+                                    <button class="btn btn-lg btn-block btn-action" type="submit">ENTRAR</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+</body>
+</html>
+

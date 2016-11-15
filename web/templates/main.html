@@ -1,0 +1,46 @@
+{{ define "content" }}
+<div class="page-header">
+	<h2>{{if eq .Lang 0}}Content Manager{{else if eq .Lang 1}}Gestor
+		de Contenidos{{end}}</h2>
+</div>
+<!--   template "message" . -->
+
+<div class="container practice-container">
+	{{ range $key, $practice := .PracticeList }}
+	<div id={{$practice.Id}} class="panel panel-default practice-panel">
+		<button id={{$practice.Id}} {{if eq $.Lang 0}}title="Show more"{{else if eq $.Lang 1}}title="Mostrar m&aacute;s"{{end}}
+		class="panel-heading btn-block text-left action-show-practice-info practice-info-toggle">
+			<b>{{$practice.Title}}</b>
+		</button>
+		<button id={{$practice.Id}} {{if eq $.Lang 0}}title="Show less"{{else if eq $.Lang 1}}title="Mostrar menos"{{end}}
+		class="panel-heading btn-block text-left action-hide-practice-info practice-info-toggle"
+			style="display: none; margin-top: 0;">
+			<b>{{$practice.Title}}</b>
+		</button>
+		<div id={{$practice.Id}} class="panel-body practice-info-body ">
+			<b>{{if eq $.Lang 0}}Description{{else if eq $.Lang 1}}Descripci&oacute;n{{end}}</b><br>
+			{{$practice.Description}}<br> <br>
+			<b><a href=/practice/{{$practice.Id}}/file/{{$practice.Main_File}} target="_blank">{{if eq $.Lang 0}}Instructions{{else if eq $.Lang 1}}Instrucciones{{end}}</a></b><br>
+			{{ $length := len $practice.AttachmentList }}
+			{{ if ne $length 0 }}
+				<br> <b>{{if eq $.Lang 0}}Attachments{{else if eq $.Lang 1}}Archivos Adjuntos{{end}} :</b><br>
+				{{ range $key, $value := $practice.AttachmentList }}
+					<a href=/practice/{{$practice.Id}}/file/{{$value}}>{{$value}}</a><br>
+				{{ end }}
+			{{ end }}
+			{{ $length := len $practice.LinkList }}
+			{{ if ne $length 0 }}
+				<br> <b>{{if eq $.Lang 0}}Links{{else if eq $.Lang 1}}Enlaces{{end}} :</b><br>
+				{{ range $key, $value:= $practice.LinkList }}
+					<a href={{$value}} target="_blank">{{$value}}</a><br>
+				{{ end }}
+			{{ end }} <br>
+			<button id={{$practice.Id}} {{if eq $.Lang 0}}title="Show more"{{else if eq $.Lang 1}}title="Mostrar m&aacute;s"{{end}}
+			class="action-hide-practice-info">Hide</button>
+		</div>
+	</div>
+	{{ end }}
+</div>
+
+<script src="{{ .Static }}js/practices.js"></script>
+{{ end }}
