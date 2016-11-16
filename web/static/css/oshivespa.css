@@ -1,0 +1,13 @@
+.practice-panel {
+  margin-bottom: 0px;
+}
+.action-hide-practice-info.practice-info-toggle{
+  display: none;
+  margin-top: 0px;
+}
+.no-margin {
+	margin:0px;
+}
+.no-margin-bottom {
+	margin-bottom: 0px;
+}

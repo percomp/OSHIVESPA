@@ -7,12 +7,13 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"html/template"
-	"os"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
+	"strings"
 	"time"
 	//security
 	"crypto/md5"
@@ -23,12 +24,15 @@ const (
 	dbRoot    = "database" + string(filepath.Separator)
 	userTable = dbRoot + "users"
 
-	TemplateRoot        = "web" + string(filepath.Separator) + "templates" + string(filepath.Separator)
-	StaticURL    string = "" + string(filepath.Separator) + "web" + string(filepath.Separator) + "static" + string(filepath.Separator)
-	StaticRoot   string = "web" + string(filepath.Separator) + "static" + string(filepath.Separator)
-	CommonRoot = ".." + string(filepath.Separator) + ".."
-	PracticeRoot = CommonRoot + string(filepath.Separator) + "OSHIWASP_local" + string(filepath.Separator)
-	PracticeInfoFilename = "oshiwasp_info.xml"
+	TemplateRoot                = "web" + string(filepath.Separator) + "templates" + string(filepath.Separator)
+	StaticURL            string = "" + string(filepath.Separator) + "web" + string(filepath.Separator) + "static" + string(filepath.Separator)
+	StaticRoot           string = "web" + string(filepath.Separator) + "static" + string(filepath.Separator)
+	CommonRoot                  = ".." + string(filepath.Separator) + ".."
+	PracticeRoot                = CommonRoot + string(filepath.Separator) + "OSHIWASP_local" + string(filepath.Separator)
+	PracticeInfoFilename        = "oshiwasp_info.xml"
+
+	HidePracticeURL    = "" + string(filepath.Separator) + "hide" + string(filepath.Separator)
+	PublishPracticeURL = "" + string(filepath.Separator) + "publish" + string(filepath.Separator)
 )
 
 // cookie handling
@@ -102,15 +106,17 @@ type PracticeInfo struct {
 	Main_File      string
 	AttachmentList []string `xml:"Attachment"`
 	LinkList       []string `xml:"Link"`
-	Path           string
+	Path           string   `xml:"-"`
 }
-
 
 var (
 	practiceList []PracticeInfo
 )
 
 func setPractices() { //OSHIHORNET
+	//restart practice list
+	var p []PracticeInfo
+	practiceList = p
 
 	//get current practice tree
 	d, err := os.Open(PracticeRoot)
@@ -140,14 +146,13 @@ func setPractices() { //OSHIHORNET
 			practiceList = append(practiceList, practInfo)
 		}
 	}
-
 }
 
 // Context
 type Context struct {
-	Lang   int
-	Static string
-	User   string
+	Lang         int
+	Static       string
+	User         string
 	PracticeList []PracticeInfo
 }
 
@@ -259,11 +264,83 @@ func render(w http.ResponseWriter, tmpl string, cntxt Context) {
 func indexPageHandler(response http.ResponseWriter, request *http.Request) {
 	userName := getUserName(request)
 	if userName != "" {
-		//fmt.Fprintf(response, internalPage, userName)
 		cntxt := context
 		cntxt.User = userName
 		cntxt.PracticeList = practiceList
 		render(response, "main", cntxt)
+	} else {
+		http.Redirect(response, request, "/login", 302)
+	}
+}
+
+// functions
+func changeVisibility(practSelected PracticeInfo, visibility bool) {
+	log.Println("Change Visibility", practSelected, visibility)
+	practSelected.Visibility = visibility
+	outputXML, err := xml.MarshalIndent(practSelected, " ", "    ")
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
+	err2 := os.Remove(practSelected.Path + string(filepath.Separator) + PracticeInfoFilename)
+	if err2 != nil {
+		fmt.Println(err2)
+	}
+	xmlFile, err3 := os.Create(practSelected.Path + string(filepath.Separator) + PracticeInfoFilename)
+	if err3 != nil {
+		fmt.Println(err3)
+	}
+	defer xmlFile.Close()
+	xmlFile.Write(outputXML)
+	xmlFile.Close()
+}
+
+func hidePageHandler(response http.ResponseWriter, request *http.Request) {
+	userName := getUserName(request)
+	if userName != "" {
+		query := strings.Split(request.URL.Path[len(HidePracticeURL):], "/")
+		if len(query[0]) != 0 {
+			var practSelected PracticeInfo
+			for _, practInfo := range practiceList {
+				if practInfo.Id == query[0] {
+					practSelected = practInfo
+					break
+				}
+			}
+			if practSelected.Id != "" {
+				log.Println("Hide " + practSelected.Id)
+				changeVisibility(practSelected, false)
+				setPractices()
+				http.Redirect(response, request, "/", http.StatusFound)
+			}
+			http.NotFound(response, request)
+		}
+	} else {
+		http.Redirect(response, request, "/login", 302)
+	}
+}
+
+func publishPageHandler(response http.ResponseWriter, request *http.Request) {
+	userName := getUserName(request)
+	if userName != "" {
+		log.Println("Publish Page")
+		query := strings.Split(request.URL.Path[len(PublishPracticeURL):], "/")
+		log.Println("Publish Page", query[0])
+		if len(query[0]) != 0 {
+			var practSelected PracticeInfo
+			for _, practInfo := range practiceList {
+				if practInfo.Id == query[0] {
+					practSelected = practInfo
+					break
+				}
+			}
+			if practSelected.Id != "" {
+				log.Println("Publish " + practSelected.Id)
+				changeVisibility(practSelected, true)
+				setPractices()
+				http.Redirect(response, request, "/", http.StatusFound)
+			}
+			http.NotFound(response, request)
+		}
 	} else {
 		http.Redirect(response, request, "/login", 302)
 	}
@@ -292,6 +369,9 @@ func main() {
 	wakeUp()
 
 	router.HandleFunc("/", indexPageHandler)
+	http.HandleFunc(HidePracticeURL, hidePageHandler)
+	http.HandleFunc(PublishPracticeURL, publishPageHandler)
+
 	router.HandleFunc("/login", loginHandler)
 
 	router.HandleFunc("/loginSubmit", loginSubmitHandler).Methods("POST")

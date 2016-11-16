@@ -8,6 +8,7 @@
    <meta charset="utf-8">
    <title>OSHIWASP</title>
    <link rel="stylesheet" href="{{ .Static }}css/bootstrap.min.css" type="text/css">
+   <link rel="stylesheet" href="{{ .Static }}css/oshivespa.css" type="text/css">
    <link rel="shortcut icon" href="{{ .Static }}img/favicon.ico">
    <script src="{{ .Static }}js/jquery.min.js"></script>
    <script src="{{ .Static }}js/bootstrap.min.js"></script>
@@ -55,6 +56,8 @@
       </div><!-- /.container-fluid -->
    </nav>
    <div style="width: 100%;height: 56px;" ></div>
-   {{ template "content" . }}
+   <div class="container">
+       {{ template "content" . }}
+   </div>
 </body>
 </html>

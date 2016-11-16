@@ -5,18 +5,62 @@
 </div>
 <!--   template "message" . -->
 
-<div class="container practice-container">
+<div class="practice-container">
 	{{ range $key, $practice := .PracticeList }}
 	<div id={{$practice.Id}} class="panel panel-default practice-panel">
-		<button id={{$practice.Id}} {{if eq $.Lang 0}}title="Show more"{{else if eq $.Lang 1}}title="Mostrar m&aacute;s"{{end}}
-		class="panel-heading btn-block text-left action-show-practice-info practice-info-toggle">
-			<b>{{$practice.Title}}</b>
-		</button>
-		<button id={{$practice.Id}} {{if eq $.Lang 0}}title="Show less"{{else if eq $.Lang 1}}title="Mostrar menos"{{end}}
-		class="panel-heading btn-block text-left action-hide-practice-info practice-info-toggle"
-			style="display: none; margin-top: 0;">
-			<b>{{$practice.Title}}</b>
-		</button>
+	
+	
+	<nav class="navbar navbar-default no-margin-bottom">
+      <div class="container-fluid">
+         <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=#{{$practice.Id}}menu aria-expanded="false">
+               <span class="sr-only">Toggle navigation</span>
+               <span class="icon-bar"></span>
+               <span class="icon-bar"></span>
+               <span class="icon-bar"></span>
+               <span class="icon-bar"></span>
+            </button>
+        <ul class="nav navbar-nav navbar-left panel no-margin">
+		<li id={{$practice.Id}} 
+		class="nav-item navbar-left action-show-practice-info practice-info-toggle">
+			<a href="#">{{$practice.Title}}</a></li>
+		<li href='#' id={{$practice.Id}} {{if eq $.Lang 0}}title="Show less"{{else if eq $.Lang 1}}title="Mostrar menos"{{end}}
+		class="nav-item navbar-left action-hide-practice-info practice-info-toggle">
+			<a href="#">{{$practice.Title}}</a></li>
+		</ul>	
+		</div>
+		
+		
+		 <div class="collapse navbar-collapse" id={{$practice.Id}}menu>
+		 <ul class="nav navbar-nav navbar-right">
+		 {{if eq $practice.Visibility true}}
+               <li id={{$practice.Id}} class="nav-item visibility-toggle" {{if eq $.Lang 0}}title="Hide"{{else if eq $.Lang 1}}title="Ocultar"{{end}}>
+               <a href=hide/{{$practice.Id}}><span class="glyphicon glyphicon-eye-open"></a>
+               </li>
+               <li id={{$practice.Id}} class="nav-item visibility-toggle" {{if eq $.Lang 0}}title="Publish"{{else if eq $.Lang 1}}title="Publicar"{{end}} style="display: none;">
+               <a href=publish/{{$practice.Id}}><span class="glyphicon glyphicon-eye-close"></a>
+               </li>
+          {{else}}
+               <li id={{$practice.Id}} class="nav-item visibility-toggle" {{if eq $.Lang 0}}title="Hide"{{else if eq $.Lang 1}}title="Ocultar"{{end}} style="display: none;">
+               <a href="hide/{{$practice.Id}}"><span class="glyphicon glyphicon-eye-open"></a>
+               </li>
+               <li id={{$practice.Id}} class="nav-item visibility-toggle" {{if eq $.Lang 0}}title="Publish"{{else if eq $.Lang 1}}title="Publicar"{{end}}>
+               <a href="publish/{{$practice.Id}}"><span class="glyphicon glyphicon-eye-close"></a>
+               </li>
+          {{end}}
+               <li class="nav-item">
+               <a href="#"><span class="glyphicon glyphicon-edit"></a>
+               </li>
+               <li class="nav-item"> 
+               <a href="#"><span class="glyphicon glyphicon-floppy-save"></span></a>
+               </li>
+               <li class="nav-item"> 
+               <a href="#"><span class="glyphicon glyphicon-remove"></span></a>
+               </li> 
+           </ul>
+		 </div></div></nav>
+		
+		
 		<div id={{$practice.Id}} class="panel-body practice-info-body ">
 			<b>{{if eq $.Lang 0}}Description{{else if eq $.Lang 1}}Descripci&oacute;n{{end}}</b><br>
 			{{$practice.Description}}<br> <br>

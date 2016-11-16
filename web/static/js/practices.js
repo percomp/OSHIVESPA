@@ -11,3 +11,10 @@ $(function() {
 		$('#'+ this.id +'.practice-info-body').slideUp(500);
 	});
 });
+
+$(function() {
+	$('.visibility-toggle').click(function() {
+		console.log('Toggle visibility '+ this.id);
+		$('#'+ this.id +'.visibility-toggle' ).toggle();
+	});
+});
