@@ -9,18 +9,17 @@
 	{{ range $key, $practice := .PracticeList }}
 	<div id={{$practice.Id}} class="panel panel-default practice-panel">
 	
-	
 	<nav class="navbar navbar-default no-margin-bottom">
       <div class="container-fluid">
-         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=#{{$practice.Id}}menu aria-expanded="false">
+        <div class="navbar-header">
+        	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=#{{$practice.Id}}menu aria-expanded="false">
                <span class="sr-only">Toggle navigation</span>
                <span class="icon-bar"></span>
                <span class="icon-bar"></span>
                <span class="icon-bar"></span>
                <span class="icon-bar"></span>
             </button>
-        <ul class="nav navbar-nav navbar-left panel no-margin">
+        <ul class="nav navbar-nav navbar-left panel practice-nav">
 		<li id={{$practice.Id}} 
 		class="nav-item navbar-left action-show-practice-info practice-info-toggle">
 			<a href="#">{{$practice.Title}}</a></li>
@@ -34,18 +33,18 @@
 		 <div class="collapse navbar-collapse" id={{$practice.Id}}menu>
 		 <ul class="nav navbar-nav navbar-right">
 		 {{if eq $practice.Visibility true}}
-               <li id={{$practice.Id}} class="nav-item visibility-toggle" {{if eq $.Lang 0}}title="Hide"{{else if eq $.Lang 1}}title="Ocultar"{{end}}>
-               <a href=hide/{{$practice.Id}}><span class="glyphicon glyphicon-eye-open"></a>
+               <li id={{$practice.Id}} class="nav-item visibility-toggle hide-content" {{if eq $.Lang 0}}title="Hide"{{else if eq $.Lang 1}}title="Ocultar"{{end}}>
+               <a href=#><span class="glyphicon glyphicon-eye-open"></a>
                </li>
-               <li id={{$practice.Id}} class="nav-item visibility-toggle" {{if eq $.Lang 0}}title="Publish"{{else if eq $.Lang 1}}title="Publicar"{{end}} style="display: none;">
-               <a href=publish/{{$practice.Id}}><span class="glyphicon glyphicon-eye-close"></a>
+               <li id={{$practice.Id}} class="nav-item visibility-toggle publish-content" {{if eq $.Lang 0}}title="Publish"{{else if eq $.Lang 1}}title="Publicar"{{end}} style="display: none;">
+               <a href=#><span class="glyphicon glyphicon-eye-close"></a>
                </li>
           {{else}}
-               <li id={{$practice.Id}} class="nav-item visibility-toggle" {{if eq $.Lang 0}}title="Hide"{{else if eq $.Lang 1}}title="Ocultar"{{end}} style="display: none;">
-               <a href="hide/{{$practice.Id}}"><span class="glyphicon glyphicon-eye-open"></a>
+               <li id={{$practice.Id}} class="nav-item visibility-toggle hide-content" {{if eq $.Lang 0}}title="Hide"{{else if eq $.Lang 1}}title="Ocultar"{{end}} style="display: none;">
+               <a href="#"><span class="glyphicon glyphicon-eye-open"></a>
                </li>
-               <li id={{$practice.Id}} class="nav-item visibility-toggle" {{if eq $.Lang 0}}title="Publish"{{else if eq $.Lang 1}}title="Publicar"{{end}}>
-               <a href="publish/{{$practice.Id}}"><span class="glyphicon glyphicon-eye-close"></a>
+               <li id={{$practice.Id}} class="nav-item visibility-toggle publish-content" {{if eq $.Lang 0}}title="Publish"{{else if eq $.Lang 1}}title="Publicar"{{end}}>
+               <a href="#"><span class="glyphicon glyphicon-eye-close"></a>
                </li>
           {{end}}
                <li class="nav-item">
@@ -54,14 +53,17 @@
                <li class="nav-item"> 
                <a href="#"><span class="glyphicon glyphicon-floppy-save"></span></a>
                </li>
-               <li class="nav-item"> 
+               <li id={{$practice.Id}} class="nav-item remove-content" {{if eq $.Lang 0}}title="Remove"{{else if eq $.Lang 1}}title="Eliminar"{{end}}> 
                <a href="#"><span class="glyphicon glyphicon-remove"></span></a>
                </li> 
            </ul>
 		 </div></div></nav>
-		
-		
-		<div id={{$practice.Id}} class="panel-body practice-info-body ">
+		<div id={{$practice.Id}} class="panel-body remove-confirmation">
+			<b>{{if eq $.Lang 0}}Are you sure you want to remove this content?{{else if eq $.Lang 1}}¿Está usted seguro de que desea eliminar este contenido?{{end}}</b><br>
+			<div><button type="button" id={{$practice.Id}} class="btn btn-danger remove-confirmation-btn"><span class="glyphicon glyphicon-ok"></span> {{if eq $.Lang 0}}Remove{{else if eq $.Lang 1}}Eliminar{{end}}</button><button type="button" id={{$practice.Id}} class="btn remove-cancel-btn"><span class="glyphicon glyphicon-remove"></span> {{if eq $.Lang 0}}Cancel{{else if eq $.Lang 1}}Cancelar{{end}}</button></div>
+		<hr class="no-margin">
+		</div>
+		<div id={{$practice.Id}} class="panel-body practice-info-body">
 			<b>{{if eq $.Lang 0}}Description{{else if eq $.Lang 1}}Descripci&oacute;n{{end}}</b><br>
 			{{$practice.Description}}<br> <br>
 			<b><a href=/practice/{{$practice.Id}}/file/{{$practice.Main_File}} target="_blank">{{if eq $.Lang 0}}Instructions{{else if eq $.Lang 1}}Instrucciones{{end}}</a></b><br>

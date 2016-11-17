@@ -5,9 +5,16 @@
   display: none;
   margin-top: 0px;
 }
+.practice-nav {
+	margin: 0px;
+	margin-right: 70px;
+}
 .no-margin {
 	margin:0px;
 }
 .no-margin-bottom {
 	margin-bottom: 0px;
+}
+.remove-confirmation {
+	display: none;
 }

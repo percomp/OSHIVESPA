@@ -33,6 +33,7 @@ const (
 
 	HidePracticeURL    = "" + string(filepath.Separator) + "hide" + string(filepath.Separator)
 	PublishPracticeURL = "" + string(filepath.Separator) + "publish" + string(filepath.Separator)
+	RemovePracticeURL  = "" + string(filepath.Separator) + "remove" + string(filepath.Separator)
 )
 
 // cookie handling
@@ -294,6 +295,44 @@ func changeVisibility(practSelected PracticeInfo, visibility bool) {
 	xmlFile.Close()
 }
 
+func deletePractice(practSelected PracticeInfo) {
+	//delete Main File
+	err1 := os.Remove(practSelected.Path + string(filepath.Separator) + practSelected.Main_File)
+	if err1 != nil {
+		fmt.Println(err1)
+	}
+	// delete XML File
+	err2 := os.Remove(practSelected.Path + string(filepath.Separator) + PracticeInfoFilename)
+	if err2 != nil {
+		fmt.Println(err2)
+	}
+	//Delete Attachments
+	for _, attachment := range practSelected.AttachmentList {
+		err3 := os.Remove(practSelected.Path + string(filepath.Separator) + attachment)
+		if err3 != nil {
+			fmt.Println(err3)
+		}
+	}
+	//Delete Directory if empty
+	d, err4 := os.Open(practSelected.Path)
+	if err4 != nil {
+		fmt.Println(err4)
+		os.Exit(1)
+	}
+	defer d.Close()
+	files := []string{}
+	_ = filepath.Walk(practSelected.Path, func(path string, f os.FileInfo, err error) error {
+		if f.IsDir() == false {
+			files = append(files, path)
+		}
+		return nil
+	})
+
+	if len(files) == 0 {
+		os.RemoveAll(practSelected.Path)
+	}
+}
+
 func hidePageHandler(response http.ResponseWriter, request *http.Request) {
 	userName := getUserName(request)
 	if userName != "" {
@@ -322,9 +361,7 @@ func hidePageHandler(response http.ResponseWriter, request *http.Request) {
 func publishPageHandler(response http.ResponseWriter, request *http.Request) {
 	userName := getUserName(request)
 	if userName != "" {
-		log.Println("Publish Page")
 		query := strings.Split(request.URL.Path[len(PublishPracticeURL):], "/")
-		log.Println("Publish Page", query[0])
 		if len(query[0]) != 0 {
 			var practSelected PracticeInfo
 			for _, practInfo := range practiceList {
@@ -336,6 +373,31 @@ func publishPageHandler(response http.ResponseWriter, request *http.Request) {
 			if practSelected.Id != "" {
 				log.Println("Publish " + practSelected.Id)
 				changeVisibility(practSelected, true)
+				setPractices()
+				http.Redirect(response, request, "/", http.StatusFound)
+			}
+			http.NotFound(response, request)
+		}
+	} else {
+		http.Redirect(response, request, "/login", 302)
+	}
+}
+
+func removePageHandler(response http.ResponseWriter, request *http.Request) {
+	userName := getUserName(request)
+	if userName != "" {
+		query := strings.Split(request.URL.Path[len(RemovePracticeURL):], "/")
+		if len(query[0]) != 0 {
+			var practSelected PracticeInfo
+			for _, practInfo := range practiceList {
+				if practInfo.Id == query[0] {
+					practSelected = practInfo
+					break
+				}
+			}
+			if practSelected.Id != "" {
+				log.Println("Remove " + practSelected.Id)
+				deletePractice(practSelected)
 				setPractices()
 				http.Redirect(response, request, "/", http.StatusFound)
 			}
@@ -371,6 +433,7 @@ func main() {
 	router.HandleFunc("/", indexPageHandler)
 	http.HandleFunc(HidePracticeURL, hidePageHandler)
 	http.HandleFunc(PublishPracticeURL, publishPageHandler)
+	http.HandleFunc(RemovePracticeURL, removePageHandler)
 
 	router.HandleFunc("/login", loginHandler)
 
